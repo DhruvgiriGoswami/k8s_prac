@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+        - name: auth-service
+          image: auth-service:0.0.1-SNAPSHOT
+          env:
+            - name: DB_URL
+              value: jdbc:postgresql://postgres:5432/authdb
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: auth-db-secret
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: auth-db-secret
+                  key: password
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: secret
+          ports:
+            - containerPort: 8081
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+spec:
+  selector:
+    app: auth-service
+  ports:
+    - port: 8081
+      targetPort: 8081
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: auth-db-secret
+type: Opaque
+stringData:
+  username: authuser
+  password: authpass
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: jwt-secret
+type: Opaque
+stringData:
+  secret: fake_secret_fake_secret_fake_secret_
+
+
+
